@@ -1,0 +1,5 @@
+logs
+saved_weights
+__pycache__
+*.swp
+*.swo
