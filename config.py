@@ -29,7 +29,7 @@ class Config(object):
     SGD_MOMENTUM = 0.9
 
     # Number of training epochs
-    EPOCHS = 100
+    EPOCHS = 60
 
     ################################
     #  Data
@@ -39,7 +39,7 @@ class Config(object):
     N_CLASSES = 1000    
 
     # Batch size for training
-    BATCH_SIZE = 256
+    BATCH_SIZE = 32
 
     # Data Directory
     DATA_DIR = 'data/'
@@ -55,7 +55,7 @@ class Config(object):
     ################################
 
     # Name of training run
-    RUN_NAME = 'new optim & callback debugging 2'
+    RUN_NAME = 'Full Run 1'
 
     # saved model directory
     SAVED_WEIGHTS_DIR = 'saved_weights'
