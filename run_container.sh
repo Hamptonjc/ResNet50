@@ -15,5 +15,5 @@ sudo docker run \
 	--mount type=bind,source=$datadir,target=/home/ResNet/data\
        	--gpus all \
        	-it \
-	resnet:0.2 \
+	resnet:0.3 \
 	bash \
