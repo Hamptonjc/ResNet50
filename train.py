@@ -53,9 +53,8 @@ class Trainer:
 
 
     def train(self, run_name, batch_size, epochs):
-        train_ds = self.train_ds.take(1).map(self.data_preprocessing)
-        val_ds = train_ds
-        #val_ds = self.val_ds.take(1).map(self.data_preprocessing)
+        train_ds = self.train_ds.map(self.data_preprocessing)
+        val_ds = self.val_ds.map(self.data_preprocessing)
         self.training_loop(self.network, run_name=run_name, epochs=epochs,
                             train_dataset=train_ds.batch(batch_size),
                             validation_dataset=val_ds.batch(batch_size))
