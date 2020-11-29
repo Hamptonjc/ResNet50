@@ -20,7 +20,7 @@ class Config(object):
     ##################################
 
     # Learning rate of optimizer
-    SGD_LEARNING_RATE = 0.0001
+    SGD_LEARNING_RATE = 0.1
 
     # Weight decay of optimizer
     SGD_WEIGHT_DECAY = 0.0001
@@ -55,7 +55,7 @@ class Config(object):
     ################################
 
     # Name of training run
-    RUN_NAME = 'Full Run 1'
+    RUN_NAME = 'Full Run 2'
 
     # saved model directory
     SAVED_WEIGHTS_DIR = 'saved_weights'
