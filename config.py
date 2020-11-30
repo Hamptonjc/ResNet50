@@ -50,6 +50,9 @@ class Config(object):
     # Number of classes
     N_CLASSES = 1000
 
+    # Network input shape
+    INPUT_SHAPE = (None,224,224,3)
+
     ################################
     #  Misc.
     ################################
@@ -62,7 +65,6 @@ class Config(object):
 
     # Name of network to use (currently only have resnet50)
     NETWORK_NAME = 'resnet50'
-
 
     ################################
     #  Callbacks
