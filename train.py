@@ -14,6 +14,7 @@
 
 import os
 from termcolor import colored
+from tqdm import tqdm
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from ResNet50 import ResNet50
@@ -56,8 +57,8 @@ class Trainer:
         train_ds = self.train_ds.map(self.data_preprocessing)
         val_ds = self.val_ds.map(self.data_preprocessing)
         self.training_loop(self.network, run_name=run_name, epochs=epochs,
-                            train_dataset=train_ds.batch(batch_size),
-                            validation_dataset=val_ds.batch(batch_size))
+                            train_dataset=train_ds.batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE),
+                            validation_dataset=val_ds.batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE))
 
 
 
@@ -68,7 +69,6 @@ class Trainer:
             pred = model(image)
             loss = model.loss_function(label, pred)
             gradients = tape.gradient(loss, model.trainable_variables)
-            tf.print('TRAINING LOSS:', tf.math.reduce_mean(loss), end="\r")
 
         accuracy = self.accuracy_func(label, pred)
         model.optim.apply_gradients((zip(gradients, model.trainable_variables)))
@@ -79,7 +79,6 @@ class Trainer:
     def validation_step(self, model, image, label):
         pred = model(image)
         loss = model.loss_function(label, pred)
-        tf.print('VALIDATION LOSS:', tf.math.reduce_mean(loss), end="\r")
         accuracy = self.accuracy_func(label, pred)
         model.val_loss_metric(loss)
         model.val_acc_metric(accuracy)
@@ -110,9 +109,9 @@ class Trainer:
             print(colored(f"\n\n================= Epoch {epoch+1} ====================","cyan",
                     attrs=['bold']))
             print("\n\nTraining Step Beginning...\n\n")
-            for example in train_dataset:
+            for example in tqdm(train_dataset, desc='Training Step', unit=' batches'):
                 image, label = example["image"], example["label"]
-                image, label = tf.cast(image, tf.float32), tf.cast(label, tf.float32)
+                #image, label = tf.cast(image, tf.float32), tf.cast(label, tf.float32)
                 self.training_step(model, image, label)
             with train_summary_writer.as_default():
                 tf.summary.scalar('train loss', model.train_loss_metric.result(), step=epoch+1)
@@ -122,9 +121,9 @@ class Trainer:
 
             ###### Validation #######
             print(f"\n\nEpoch {epoch+1} Training Complete! \n\nValidation Beginning...")
-            for example in validation_dataset:
+            for example in tqdm(validation_dataset, desc='Validation Step', unit=' batches'):
                 image, label = example["image"], example["label"]
-                image, label = tf.cast(image, tf.float32), tf.cast(label, tf.float32)
+                #image, label = tf.cast(image, tf.float32), tf.cast(label, tf.float32)
                 self.validation_step(model, image, label)
             with val_summary_writer.as_default():
                 tf.summary.scalar('validation loss', model.val_loss_metric.result(), step=epoch+1)
@@ -156,13 +155,24 @@ class Trainer:
         return train_summary_writer, val_summary_writer
 
 
-    def data_preprocessing(self, example):
+    def data_preprocessing_OG(self, example):
         image, label = example["image"], example["label"]
         image = tf.image.resize(image, config.INPUT_IMAGE_SIZE)
         label = tf.one_hot(label, self.network.n_classes)
         image = tf.image.per_image_standardization(image)
         example["image"], example["label"] = image, label
         return example
+
+    def data_preprocessing(self, example):
+        image, label = example["image"], example["label"]
+        image = tf.cast(image, tf.float32)
+        image = tf.image.resize(image, config.INPUT_IMAGE_SIZE)
+        image = tf.keras.applications.resnet_v2.preprocess_input(image)
+        label = tf.one_hot(label, self.network.n_classes)
+        label = tf.cast(label, tf.float32)
+        example["image"], example["label"] = image, label
+        return example
+
 
     
     def ReduceLROnPlateau(self, monitor):

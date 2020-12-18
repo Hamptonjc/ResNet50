@@ -1,18 +1,18 @@
 #! /bin/bash
 
-echo Please enter directory path to data:
+echo Please enter directory path to data or leave blank to use default:
 
 read datadir
 
 if [ -z "$datadir" ]
 then
-	datadir=/media/jonathan/Jons_Extern/data/imagenet/
+	datadir="/media/jonathan/jonathans extern/data/imagenet/"
 fi
 
 sudo docker run \
 	-u $(id -u):$(id -g) \
 	--mount type=bind,source="$(pwd)",target=/home/ResNet \
-	--mount type=bind,source=$datadir,target=/home/ResNet/data\
+	--mount type=bind,source="$datadir",target=/home/ResNet/data\
        	--gpus all \
        	-it \
 	resnet:0.3 \

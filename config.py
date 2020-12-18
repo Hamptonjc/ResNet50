@@ -39,10 +39,11 @@ class Config(object):
     N_CLASSES = 1000    
 
     # Batch size for training
-    BATCH_SIZE = 32
+    BATCH_SIZE = 48
 
     # Data Directory
     DATA_DIR = 'data/'
+    
 
     # Size of input images (images in dataset are resized to this)
     INPUT_IMAGE_SIZE = (224,224)
@@ -58,7 +59,7 @@ class Config(object):
     ################################
 
     # Name of training run
-    RUN_NAME = 'Full Run 2'
+    RUN_NAME = 'new preprocessing'
 
     # saved model directory
     SAVED_WEIGHTS_DIR = 'saved_weights'
@@ -74,7 +75,7 @@ class Config(object):
     REDUCE_LR_ON_PLATEAU = True
     
     # Number of epochs to judge plateau on
-    RLROP_PATIENCE = 4
+    RLROP_PATIENCE = 3
     
     # max amount of change in loss for RLROP to reduce LR
     RLROP_THRESHOLD = 1.0
