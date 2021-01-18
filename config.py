@@ -6,13 +6,6 @@
 ###################################
 
 
-
-
-
-#################################################################
-#  ResNet Config (as per the original ResNet paper)
-#################################################################
-
 class Config(object):
     
     ##################################
@@ -20,7 +13,7 @@ class Config(object):
     ##################################
 
     # Learning rate of optimizer
-    SGD_LEARNING_RATE = 0.1
+    SGD_LEARNING_RATE = 1e-4
 
     # Weight decay of optimizer
     SGD_WEIGHT_DECAY = 0.0001
@@ -29,7 +22,7 @@ class Config(object):
     SGD_MOMENTUM = 0.9
 
     # Number of training epochs
-    EPOCHS = 60
+    EPOCHS = 100
 
     ################################
     #  Data
@@ -43,7 +36,6 @@ class Config(object):
 
     # Data Directory
     DATA_DIR = 'data/'
-    
 
     # Size of input images (images in dataset are resized to this)
     INPUT_IMAGE_SIZE = (224,224)
@@ -59,13 +51,16 @@ class Config(object):
     ################################
 
     # Name of training run
-    RUN_NAME = 'new preprocessing'
+    RUN_NAME = 'full run 2'
 
     # saved model directory
     SAVED_WEIGHTS_DIR = 'saved_weights'
 
     # Name of network to use (currently only have resnet50)
     NETWORK_NAME = 'resnet50'
+
+    # directory to store logs
+    LOG_DIR = 'logs'
 
     ################################
     #  Callbacks
@@ -75,12 +70,14 @@ class Config(object):
     REDUCE_LR_ON_PLATEAU = True
     
     # Number of epochs to judge plateau on
-    RLROP_PATIENCE = 3
+    RLROP_PATIENCE = 10
     
     # max amount of change in loss for RLROP to reduce LR
-    RLROP_THRESHOLD = 1.0
+    RLROP_THRESHOLD = 0.0001
     
     # factor that the learning rate is reduced by
     RLROP_FACTOR = 0.1
-
+    
+    # lowest that the learning rate can be reduced to
+    RLROP_LR_MIN = 0.00001
 

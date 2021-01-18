@@ -2,17 +2,15 @@
 
 ##############################
 #   Author: Jonathan Hampton
-#   November 2020
 #   github.com/hamptonjc
 ###############################
-
 
 
 ##################################################
 #  Imports 
 ##################################################
 
-from typing import Tuple, NamedTuple, List
+from typing import Tuple, NamedTuple, List, Dict
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow.keras import layers as kl
@@ -24,28 +22,21 @@ from config import Config as config
 
 class ResNet50(tf.keras.Model):
 
-
-
-
-    def __init__(self, n_classes: int=config.N_CLASSES):
-
+    def __init__(self)->None:
         super().__init__()
         
-        # Misc. Parameters
-        self.n_classes = n_classes
-
-        # Training Functions
-        self.loss_function = tf.keras.losses.CategoricalCrossentropy()
-        self.optim = tfa.optimizers.SGDW(weight_decay=config.SGD_WEIGHT_DECAY,
-                                        learning_rate=config.SGD_LEARNING_RATE,
-                                        momentum=config.SGD_MOMENTUM)
-
-        # Metric
+        # Metrics
         self.train_loss_metric = tf.keras.metrics.Mean(name='train_loss')
         self.val_loss_metric = tf.keras.metrics.Mean(name='validation_loss')
-        self.train_acc_metric = tf.keras.metrics.Mean(name='training_accuracy')
-        self.val_acc_metric = tf.keras.metrics.Mean(name='validation_accuracy')
-
+        self.train_top_1_metric = tf.keras.metrics.SparseTopKCategoricalAccuracy(k=1,
+                                                                    name='train_top_1_accuracy')
+        self.val_top_1_metric = tf.keras.metrics.SparseTopKCategoricalAccuracy(k=1,
+                                                                    name='validation_top_1_accuracy')
+        self.train_top_5_metric = tf.keras.metrics.SparseTopKCategoricalAccuracy(k=5,
+                                                                    name='train_top_5_accuracy')
+        self.val_top_5_metric = tf.keras.metrics.SparseTopKCategoricalAccuracy(k=5,
+                                                                    name='validation_top_5_accuracy')
+        
         ########## Layers ############
         
         # Stage I
@@ -159,7 +150,12 @@ class ResNet50(tf.keras.Model):
         # Build
         self.build(config.INPUT_SHAPE)
 
-    def call(self, input_tensor):
+
+#########################################################
+#  Forward Method
+#########################################################
+
+    def call(self, input_tensor:tf.Tensor)->tf.Tensor:
         # Stage I
         x = self.input_layer(input_tensor)
         x = self.conv1_pad(x)
@@ -206,11 +202,34 @@ class ResNet50(tf.keras.Model):
     class ResidualBlock(tf.keras.Model):
         """
         TF model class for ResNet50 residual blocks.
+
+        Arguments:
+        name(str): name of the residual block, (layer names will match)
+
+        conv1_filters(int): Number of filters in first convolution layer.
+        
+        conv2_filters(int): Number of filters in second convolution layer.
+
+        conv3_filters(int): Number of filters in third convolution layer.
+
+        conv1_stride(Tuple[int]): Stride size of first convolution layer.
+
+        conv2_stride(Tuple[int]): Stride size of second convolution layer.
+
+        conv3_stride(Tuple[int]): Stride size of third convolution layer.
+
+        skip_conv(bool): When True, the skip connection is passed through a convolution layer.
+
+        skip_pool(bool): When True, the skip connection is passed through a pooling layer.
+
+        skip_connection_stride(Tuple[int]): Stride of the skip connection convolution layer.
+
         """
         def __init__(self, name:str, input_shape:tuple,
                         conv1_filters:int, conv2_filters:int, conv3_filters: int,
                         conv1_stride:int, conv2_stride:int, conv3_stride:int,
-                        skip_conv:bool=False, skip_pool:bool=False, skip_connection_stride: int=(1,1)):
+                        skip_conv:bool=False, skip_pool:bool=False,
+                        skip_connection_stride: int=(1,1))->None:
             
             super().__init__() 
             self._name = name
@@ -230,6 +249,8 @@ class ResNet50(tf.keras.Model):
             self.relu2 = kl.Activation('relu', name=name+'_relu2')
             self.skip_conv = None
             self.skip_pool = None
+
+            # Different configurations of residual blocks   
             if skip_conv:
                 self.skip_conv = kl.Conv2D(filters=conv3_filters, kernel_size=(1,1),
                                             strides=skip_connection_stride,
@@ -244,8 +265,7 @@ class ResNet50(tf.keras.Model):
             # Build
             self.build(input_shape)
 
-        def call(self, input_tensor: tf.Tensor,
-                    training: bool=None) -> tf.Tensor:
+        def call(self, input_tensor: tf.Tensor) -> tf.Tensor:
             input_tensor = self.input_layer(input_tensor)
             x = self.preact_bn(input_tensor)
             x = self.preact_relu(x)
@@ -271,5 +291,53 @@ class ResNet50(tf.keras.Model):
             output = x + skip_connection
             return output
 
+
+###########################################################################################
+#  Training
+##########################################################################################
+
+    def train_step(self, example: tf.train.Example)->Dict[tf.keras.metrics]:
+        # Unpack data    
+        image, label = example["image"], example["label"]
+
+        with tf.GradientTape() as tape:
+            # Calculate prediction
+            pred = self(image)
+            # Calculate loss
+            loss = self.loss_function(label, pred)
+            # Compute gradients
+            gradients = tape.gradient(loss, self.trainable_variables)
+        # Update weights
+        self.optim.apply_gradients(zip(gradients, self.trainable_variables))
+
+        # Update metrics
+        self.train_loss_metric(loss)
+        self.train_top_1_metric(label, pred)
+        self.train_top_5_metric(label, pred)
+        return {"loss": self.train_loss_metric.result(),
+                "accuracy": self.train_top_1_metric.result(),
+                "top 5": self.train_top_5_metric.result()}
+
+    def test_step(self, example):
+        # Unpack data
+        image, label = example["image"], example["label"]
+        # Compute predictions 
+        pred = self(image)
+        # Calculate loss
+        loss = self.loss_function(label, pred)
+        # Update metrics
+        self.val_loss_metric(loss)
+        self.val_top_1_metric(label, pred)
+        self.val_top_5_metric(label, pred)
+        return {"loss": self.val_loss_metric.result(),
+                "accuracy": self.val_top_1_metric.result(),
+                "top 5": self.val_top_5_metric.result()}
+
+
+    @property
+    def metrics(self):
+        # For auto state reset for metrics
+        return [self.train_loss_metric, self.train_top_1_metric, self.train_top_5_metric,
+                self.val_loss_metric, self.val_top_1_metric, self.val_top_5_metric]
 
 
