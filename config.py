@@ -13,13 +13,13 @@ class Config(object):
     ##################################
 
     # Learning rate of optimizer
-    SGD_LEARNING_RATE = 1e-4
+    LEARNING_RATE = 1e-4
 
     # Weight decay of optimizer
-    SGD_WEIGHT_DECAY = 0.0001
+    WEIGHT_DECAY = 0.0001
 
     # Momentum of optimizer
-    SGD_MOMENTUM = 0.9
+    MOMENTUM = 0.9
 
     # Number of training epochs
     EPOCHS = 100
@@ -54,7 +54,7 @@ class Config(object):
     RUN_NAME = 'full run 2'
 
     # saved model directory
-    SAVED_WEIGHTS_DIR = 'saved_weights'
+    SAVED_WEIGHTS_DIR = 'checkpoints'
 
     # Name of network to use (currently only have resnet50)
     NETWORK_NAME = 'resnet50'
