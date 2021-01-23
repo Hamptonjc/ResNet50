@@ -145,7 +145,7 @@ class ResNet50(tf.keras.Model):
 
         self.final_pooling = kl.GlobalAveragePooling2D(name='final_pooling')
 
-        self.predictions = kl.Dense(self.n_classes, activation='softmax',name='predictions')
+        self.predictions = kl.Dense(config.N_CLASSES, activation='softmax',name='predictions')
 
         # Build
         self.build(config.INPUT_SHAPE)
@@ -296,7 +296,7 @@ class ResNet50(tf.keras.Model):
 #  Training
 ##########################################################################################
 
-    def train_step(self, example: tf.train.Example)->Dict[tf.keras.metrics]:
+    def train_step(self, example: tf.train.Example)->dict:
         # Unpack data    
         image, label = example["image"], example["label"]
 

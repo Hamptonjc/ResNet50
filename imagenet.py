@@ -16,6 +16,7 @@ class ImageNet:
                     data_dir: str=Config.DATA_DIR,
                     take:int=None)->None:
         self.data_dir = data_dir
+        self.batch_size = batch_size
         imagenet_builder = tfds.builder("imagenet2012", data_dir=self.data_dir)
         data_dl_config = tfds.download.DownloadConfig(extract_dir=self.data_dir,
                                                         manual_dir=self.data_dir)
